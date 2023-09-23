@@ -1,58 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import Note from './components/Note'
 
 const App = () => {
-  const [left, setLeft] = useState(0)
-  const [right, setRight] = useState(0)
-  const [allClicks, setAll] = useState([])
-  const [total, setTotal] = useState(0)
+  const [notes, setNotes] = useState([])
+  const [newNote, setNewNote] = useState('')
+  const [showAll, setShowAll] = useState(true)
 
-  const handleLeftClick = () => {
-    const updatedLeft = left + 1
+  //const hook = () => {
+  //  console.log('effect')
+  //  axios
+  //    .get('http://localhost:3001/notes')
+  //    .then(response => {
+  //    console.log('promise fulfilled')
+  //    setNotes(response.data)
+  //  })
+  //}
+  //useEffect(hook, [])
 
-    setAll(allClicks.concat('L'))
-    setLeft(left + 1)
-    setTotal(updatedLeft + right)
+  useEffect(() => {
+    console.log('effect')
+    axios
+      .get('http://localhost:3001/notes')
+      .then(response => {
+        console.log('promise fulfilled')
+        setNotes(response.data)
+      })
+  }, [])
 
-  }
-
-  const handleRightClick = () => {
-    const updatedRight = right + 1
-
-    setAll(allClicks.concat('R'))
-    setRight(right + 1)
-    setTotal(left + updatedRight)
-  }
-
-  const Button = ({ handleClick, text }) => (
-    <button onClick={handleClick}>
-      {text}
-    </button>
-  )
-
-  const History = (props) => {
-    if (props.allClicks.length === 0) {
-      return (
-        <p>
-          the app is used by pressing the buttons
-        </p>
-      )
-    }
-    return (
-      <p>
-        button press history: {props.allClicks.join(' ')}
-      </p>
-    )
-  }
+  console.log('render', notes.length, 'notes')
 
   return (
-    <div>
-      {left}
-      <Button handleClick={handleLeftClick} text='left' />
-      <Button handleClick={handleRightClick} text='right' />
-      {right}
-      <p>{total}</p>
-      <History allClicks={allClicks} />
-    </div>
+    <>
+      <h1>Notes</h1>
+      <ul>
+        {notes.map(note => 
+        <li key={note.id}>
+          {note.content}
+          </li>
+        )}
+      </ul>
+    </>
   )
 }
 
