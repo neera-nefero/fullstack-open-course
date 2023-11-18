@@ -1,24 +1,45 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import Notification from './components/Notification'
 import personService from './services/persons'
 
-const Persons = ({ persons, setPersons }) => {
+const Persons = ({ persons, setPersons, setNotificationMessage, setNotificationMessageType }) => {
   return (
     <>
       <h2>Numbers</h2>
       <ul>
         {persons.map(person =>
-          <Person key={person.id} person={person} persons={persons} setPersons={setPersons} />
+          <Person key={person.id} person={person} persons={persons} setPersons={setPersons} setNotificationMessage={setNotificationMessage} setNotificationMessageType={setNotificationMessageType} />
         )}
       </ul>
     </>
   )
 }
-const Person = ({ person, persons, setPersons }) => {
+const Person = ({ person, persons, setPersons, setNotificationMessage, setNotificationMessageType }) => {
   const handleDeletePerson = (event) => {
     if (window.confirm(`Delete ${person.name}?`)) {
       // Remove from DB    
       personService.remove(person.id)
+        .then(returnedPerson => {
+          // Notification
+          setNotificationMessageType('success')
+          setNotificationMessage(
+            `Removed ${person.name}`
+          )
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
+        })
+        .catch(error => {
+          // Notification
+          setNotificationMessageType('error')
+          setNotificationMessage(
+            `Error removing ${person.name}`
+          )
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
+        })
 
       // Remove from browser Array
       const newPersonArray = (persons.filter((personInArray) => personInArray.id !== person.id))
@@ -68,7 +89,7 @@ const Filter = ({ persons, setShowAll, setFilteredPersons }) => {
   )
 }
 
-const PersonForm = ({ persons, setPersons }) => {
+const PersonForm = ({ persons, setPersons, setNotificationMessage, setNotificationMessageType }) => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
 
@@ -108,7 +129,26 @@ const PersonForm = ({ persons, setPersons }) => {
                 }
               })
               setPersons(newPersons)
-            });
+
+              // Notification
+              setNotificationMessageType('success')
+              setNotificationMessage(
+                `Updated ${newName}`
+              )
+              setTimeout(() => {
+                setNotificationMessage(null)
+              }, 5000)
+            })
+            .catch(error => {
+              // Notification
+              setNotificationMessageType('error')
+              setNotificationMessage(
+                `Fail updating ${newName}`
+              )
+              setTimeout(() => {
+                setNotificationMessage(null)
+              }, 5000)
+            })
         }
       }
     })
@@ -125,7 +165,26 @@ const PersonForm = ({ persons, setPersons }) => {
         .then(returnedPerson => {
           // Add person in the browser array
           setPersons(persons.concat(personObject))
-        });
+
+          // Notification
+          setNotificationMessageType('success')
+          setNotificationMessage(
+            `Added ${newName}`
+          )
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
+        })
+        .catch(error => {
+          // Notification
+          setNotificationMessageType('error')
+          setNotificationMessage(
+            `Failed adding ${newName}`
+          )
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
+        })
     }
 
     // Clear inputs
@@ -154,6 +213,8 @@ const App = () => {
   const [persons, setPersons] = useState([])
   const [showAll, setShowAll] = useState(true)
   const [filteredPersons, setFilteredPersons] = useState(persons)
+  const [notificationMessage, setNotificationMessage] = useState(null)
+  const [notificationMessageType, setNotificationMessageType] = useState(null)
 
   const personsToShow = showAll
     ? persons
@@ -172,10 +233,11 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
+      <Notification message={notificationMessage} type={notificationMessageType} />
       <Filter persons={persons} showAll={showAll} setShowAll={setShowAll} setFilteredPersons={setFilteredPersons} />
       <h2>Add a new</h2>
-      <PersonForm persons={persons} setPersons={setPersons} />
-      <Persons persons={personsToShow} setPersons={setPersons} />
+      <PersonForm persons={persons} setPersons={setPersons} setNotificationMessage={setNotificationMessage} setNotificationMessageType={setNotificationMessageType} />
+      <Persons persons={personsToShow} setPersons={setPersons} setNotificationMessage={setNotificationMessage} setNotificationMessageType={setNotificationMessageType} />
     </div>
   )
 }
