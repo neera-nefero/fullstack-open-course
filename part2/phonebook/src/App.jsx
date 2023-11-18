@@ -1,21 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import personService from './services/persons'
 
-const Persons = ({ persons }) => {
+const Persons = ({ persons, setPersons }) => {
   return (
     <>
-    <h2>Numbers</h2>
-    <ul>
-      {persons.map(person =>
-        <Person key={person.id} person={person} />
-      )}
-    </ul>
+      <h2>Numbers</h2>
+      <ul>
+        {persons.map(person =>
+          <Person key={person.id} person={person} persons={persons} setPersons={setPersons} />
+        )}
+      </ul>
     </>
   )
 }
-const Person = ({ person }) => {
+const Person = ({ person, persons, setPersons }) => {
+  const handleDeletePerson = (event) => {
+    if (window.confirm(`Delete ${person.name}?`)) {
+      // Remove from DB    
+      personService.remove(person.id)
+
+      // Remove from browser Array
+      const newPersonArray = (persons.filter((personInArray) => personInArray.id !== person.id))
+      setPersons(newPersonArray)
+    }
+  }
+
   return (
     <>
-    <li>{person.name} {person.number}</li>
+      <li>{person.name} {person.number}</li><button onClick={handleDeletePerson}>delete</button>
     </>
   )
 }
@@ -29,24 +42,21 @@ const Filter = ({ persons, setShowAll, setFilteredPersons }) => {
     setNewSearch(newUpdatedSearch)
 
     // If the search box has content...
-    if (event.target.value != '')
-    {
+    if (event.target.value != '') {
       setShowAll(false)
       // Loop in the phonebook search for names
-      const searchResult = []      
+      const searchResult = []
       persons.forEach(person => {
         const target = person.name.toLowerCase()
         const search = newUpdatedSearch.toLowerCase()
         // If match, we add it to the array
-        if (target.includes(search))
-        {
-          searchResult.push(person) 
-        }        
+        if (target.includes(search)) {
+          searchResult.push(person)
+        }
       });
-      
+
       setFilteredPersons(searchResult)
-    } else 
-    {
+    } else {
       setShowAll(true)
     }
   }
@@ -72,28 +82,52 @@ const PersonForm = ({ persons, setPersons }) => {
     // Prevents to submit reload the page
     event.preventDefault()
 
-    const personObject = {
-      id: persons.length + 1,
-      name: newName,
-      number: newNumber,
+    // Duplicate check loop persons array
+    let duplicatedPerson = false;
+    persons.map(person => {
+      // If person exists
+      if (person.name == newName) {
+        duplicatedPerson = true;
+        // If user wants to replace number
+        if (window.confirm(`${person.name} is already added to phonebook, replace the old number with a new one?`)) {
+          const duplicatedPersonObject = {
+            name: newName,
+            number: newNumber,
+            id: persons.id
+          }
+
+          // Update person in DB    
+          personService.update(person.id, duplicatedPersonObject)
+            .then(returnedPerson => {
+              // Add person in the browser array
+              const newPersons = persons.map((person) => {
+                if (person.id === returnedPerson.id) {
+                  return returnedPerson
+                } else {
+                  return person
+                }
+              })
+              setPersons(newPersons)
+            });
+        }
+      }
+    })
+
+    if (duplicatedPerson === false) {
+      const personObject = {
+        name: newName,
+        number: newNumber,
+        id: persons.length + 1
+      }
+
+      // Add person in DB
+      personService.create(personObject)
+        .then(returnedPerson => {
+          // Add person in the browser array
+          setPersons(persons.concat(personObject))
+        });
     }
 
-    // Duplicate check
-    let duplicatedNameFound = false
-    persons.map(person => {
-      if (person.name == personObject.name) {
-        // Template string
-        alert(`${personObject.name} is already added to phonebook`)
-        //alert(personObject.name + ' is already added to phonebook')
-        duplicatedNameFound = true
-      }
-    }
-    )
-    // Check if name already exist
-    if (duplicatedNameFound === false) { 
-      setPersons(persons.concat(personObject))
-    }
-    
     // Clear inputs
     setNewName('')
     setNewNumber('')
@@ -107,7 +141,7 @@ const PersonForm = ({ persons, setPersons }) => {
         </div>
         <div>
           number: <input value={newNumber} onChange={handleNumberChange} />
-        </div>        
+        </div>
         <div>
           <button type="submit">add</button>
         </div>
@@ -117,18 +151,23 @@ const PersonForm = ({ persons, setPersons }) => {
 }
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { id: 1, name: 'Arto Hellas', number: '040-1234567' },
-    { id: 2, name: 'Ada Lovelace', number: '39-44-5323523' },
-    { id: 3, name: 'Dan Abramov', number: '12-43-234345' },
-    { id: 4, name: 'Mary Poppendieck', number: '39-23-6423122' }
-  ])
+  const [persons, setPersons] = useState([])
   const [showAll, setShowAll] = useState(true)
   const [filteredPersons, setFilteredPersons] = useState(persons)
 
   const personsToShow = showAll
-  ? persons
-  : filteredPersons
+    ? persons
+    : filteredPersons
+
+  // We use getAll() from the services/persons
+  // Retrieve all the persons information from the .json
+  useEffect(() => {
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
+      })
+  }, [])
 
   return (
     <div>
@@ -136,7 +175,7 @@ const App = () => {
       <Filter persons={persons} showAll={showAll} setShowAll={setShowAll} setFilteredPersons={setFilteredPersons} />
       <h2>Add a new</h2>
       <PersonForm persons={persons} setPersons={setPersons} />
-      <Persons persons={personsToShow} />
+      <Persons persons={personsToShow} setPersons={setPersons} />
     </div>
   )
 }

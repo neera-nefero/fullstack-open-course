@@ -1,5 +1,6 @@
 # FullStack Open Course
-Author: https://github.com/reidja46/
+Author: https://github.com/neera-nefero
+Student: 018678712
 
 ## Requirements:
 - Node.js
@@ -27,7 +28,7 @@ More info
 https://www.sharepointdiary.com/2014/03/fix-for-powershell-script-cannot-be-loaded-because-running-scripts-is-disabled-on-this-system.html
 
 ## Axios library
-Somewaht more pleasant than use fetch to retrieve information from a server-side
+Somewhat more pleasant than use fetch to retrieve information from a server-side
 
 npm install axios
 
