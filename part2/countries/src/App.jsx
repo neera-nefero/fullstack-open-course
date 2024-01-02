@@ -41,9 +41,6 @@ const RenderSimpleList = ({ countryResult }) => {
   )
 }
 const RenderAdvancedList = ({ countryResult, country, setCountry }) => {
-  let newCountry
-
-  // TE HAS QUEDADO AQUI, INTENTANDO VOLCAR TODA LA INFO DEL OBJETO EN UNA ARRAY, U OTRO OBJECTO, PARA LUEGO MOSTRAR.
 
   // getting all the info of an specific country
   useEffect(() => {
@@ -53,8 +50,7 @@ const RenderAdvancedList = ({ countryResult, country, setCountry }) => {
         .get(`https://studies.cs.helsinki.fi/restcountries/api/name/${countryResult}`)
         .then(response => {
           // get the country needed information
-          newCountry = response.data
-          setCountry(newCountry)
+          setCountry(response.data)
         })
         .catch(error => {
           console.error('Error fetching countries:', error)
@@ -62,15 +58,29 @@ const RenderAdvancedList = ({ countryResult, country, setCountry }) => {
     }
   }, [])
 
-  console.log(newCountry)
-
-  return (
-    <>
-      <h2>Advanced Result:</h2>
-      <ul>
-      </ul>
-    </>
-  )
+  if (country && typeof country === 'object' && Object.keys(country).length > 0) {
+    return (
+      <>
+        <h2>Advanced Result:</h2>
+        <h3>{countryResult}</h3>
+        <p>capital: {country.capital}</p>
+        <p>area: {country.area}</p>
+        <p>languages: </p>
+        <ul>
+          {Object.entries(country.languages).map(([code, language]) => (
+            <li key={code}>{language}</li>
+          ))}
+        </ul>
+        <img alt={country.flags.alt} src={country.flags.png}></img >
+      </>
+    )
+  } else {
+    return (
+      <>
+        <p>No country data available</p>
+      </>
+    )
+  }
 }
 
 const App = () => {
